@@ -1,3 +1,5 @@
+# SmartStations v1.0 -- Dropoff Station logic
+
 def factorio_percentage(precision: int, numerator: int, denominator: int):
     # no floating-point in Factorio, the best way to limit loss of precision is
     # to scale up before dividing

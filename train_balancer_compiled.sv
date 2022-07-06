@@ -1,4 +1,6 @@
 /*
+ * SmartStations v1.0 -- Dropoff Station logic
+ *
  * COMPLETED COMPILED FACTORIO BUILD FOR train_balancer.sv
  *
  * IMPORTANT: REFER TO USAGE INSTRUCTIONS NEAR MODULE dropoff_train_station EXACTLY!

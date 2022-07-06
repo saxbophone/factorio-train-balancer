@@ -1,3 +1,5 @@
+// SmartStations v1.0 -- Dropoff Station logic
+
 module get_units_accounted #(
   parameter UNITS_IN_TRAIN_LOAD = 8000, // W
   parameter INT = 31

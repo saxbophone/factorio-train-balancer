@@ -1,4 +1,5 @@
 /*
+ * SmartStations v1.0 -- Dropoff Station logic
  * NOTE: the code in this file has been normalised into "Factorio Normal Form"
  * so that it can be implemented directly in Factorio Circuit Network logic
  *
