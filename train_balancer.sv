@@ -34,15 +34,23 @@ module get_trains_limit #(
   input [INT:0] percentage_stored, // S
   input [INT:0] total_percentage_stored, // R
   input [INT:0] number_of_stations, // G
-  input [INT:0] train_count, // C
   input [INT:0] precision, // P
   output [INT:0] trains_limit // L
 );
-  reg space_available, deserves_resupply, space_in_the_queue;
-  assign space_available = units_accounted < MAX_STOREABLE && (MAX_STOREABLE - units_accounted >= UNITS_IN_TRAIN_LOAD);
-  assign deserves_resupply = percentage_stored <= (((total_percentage_stored * precision) / number_of_stations) / precision);
-  assign space_in_the_queue = train_count < QUEUE_LENGTH;
-  assign trains_limit = space_available && deserves_resupply && space_in_the_queue ? train_count + 1 : train_count;
+  reg [INT:0] average_percentage_stored;
+  assign average_percentage_stored = total_percentage_stored / number_of_stations;
+  reg [INT:0] ideal_trains_to_send, trains_to_send;
+  reg [INT:0] free_space, trains_for_free_space;
+  assign free_space = MAX_STOREABLE - units_accounted;
+  assign trains_for_free_space = free_space / UNITS_IN_TRAIN_LOAD;
+  reg [INT:0] percentage_deficit, units_deficit, trains_for_deficit, clipped_trains_for_deficit;
+  assign percentage_deficit = average_percentage_stored - percentage_stored;
+  assign units_deficit = (percentage_deficit * MAX_STOREABLE) / precision;
+  assign trains_for_deficit = units_deficit / UNITS_IN_TRAIN_LOAD;
+  assign clipped_trains_for_deficit = units_deficit > 0 ? units_deficit : 1;
+  assign ideal_trains_to_send = trains_for_free_space < clipped_trains_for_deficit ? trains_for_free_space : clipped_trains_for_deficit;
+  assign trains_to_send = ideal_trains_to_send < QUEUE_LENGTH ? ideal_trains_to_send : QUEUE_LENGTH;
+  assign trains_limit = percentage_stored > average_percentage_stored ? 0 : trains_to_send;
 endmodule
 
 module dropoff_train_station #(
@@ -73,12 +81,17 @@ module dropoff_train_station #(
     .precision(precision),
     .percentage_stored(percentage_stored)
   );
+  reg [INT:0] percentage_actually_stored;
+  get_percentage_stored #(MAX_STOREABLE, INT) psa_getter(
+    .units_accounted(units_at_this_station),
+    .precision(precision),
+    .percentage_stored(percentage_actually_stored)
+  );
   get_trains_limit #(QUEUE_LENGTH, MAX_STOREABLE, UNITS_IN_TRAIN_LOAD, INT) tl_getter(
     .units_accounted(units_accounted),
-    .percentage_stored(percentage_stored),
+    .percentage_stored(percentage_actually_stored),
     .total_percentage_stored(total_percentage_stored),
     .number_of_stations(number_of_stations),
-    .train_count(train_count),
     .precision(precision),
     .trains_limit(trains_limit)
   );

@@ -74,7 +74,7 @@ class DropoffTrainStation:
         If this is zero, we request 1 train to be sent, otherwise we request
         the calculated number of trains to be sent.
         """
-        average_percentage_stored = factorio_percentage(precision, total_percentage_stored, number_of_stations) // precision
+        average_percentage_stored = total_percentage_stored // number_of_stations
         if percentage_stored > average_percentage_stored:
             return 0  # send zero trains in this case
         else:

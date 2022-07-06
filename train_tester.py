@@ -38,7 +38,7 @@ while True:
             PRECISION,
             STATION_COUNT,
             total_percentage_stored,
-            63_000,  # TODO: units_at_this_station
+            0,  # TODO: units_at_this_station
             trains_en_route[i],
             0  # TODO: stopped_train_id
         )
