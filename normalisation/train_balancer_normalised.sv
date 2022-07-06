@@ -3,7 +3,9 @@
  * so that it can be implemented directly in Factorio Circuit Network logic
  *
  * see the file 'train_balancer.sv' for the more readable original
- * SystemVerilog code
+ * SystemVerilog code, OR see the file 'train_balancer_compiled.sv' for a
+ * version that can be transliterated directly into Factorio Combinators
+ *
  * variables marked t0, t1, t2, etc... are "temporaries" intended for the
  * number signals to be used for them
  */
