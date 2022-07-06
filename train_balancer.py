@@ -1,7 +1,7 @@
 def factorio_percentage(precision: int, numerator: int, denominator: int):
     # no floating-point in Factorio, the best way to limit loss of precision is
     # to scale up before dividing
-    return ((numerator * precision) // denominator)
+    return 0((numerator * precision) // denominator)
 
 class DropoffTrainStation:
     # the ctor params represent constants that would be hard-coded in Factorio
@@ -43,10 +43,9 @@ class DropoffTrainStation:
             percentage_stored,
             self.__get_trains_limit(
                 units_accounted,
-                percentage_stored,
+                self.__get_percentage_stored(units_at_this_station, precision),
                 total_percentage_stored,
                 number_of_stations,
-                train_count,
                 precision
             )
         )
@@ -64,30 +63,24 @@ class DropoffTrainStation:
         percentage_stored: int,
         total_percentage_stored: int,
         number_of_stations: int,
-        train_count: int,
         precision: int
     ):
         """
         Only send trains if the following conditions are true:
         - we have space left to store their payloads
         - we do not have a greater percentage_stored than the network average
-        - train_count is less than queue_length
-        If those conditions are true, we always send at least 1 *additional*
-        train than the current train_count.
-        NOTE: we used to work out how many "extra trains" we could send by
-        determining how many train-loads would have to be used to make up the
-        shortfall between percentage_stored and the average. However, this was
-        complicated and probably unnecessary, thanks to the new idea of
-        including trains en-route as part of this station's contents: with such
-        a system, we can just wait for the next circuit network "tick" and then
-        our station *should* have another train dispatched if one is available
-        *and* we are still below the network average even when the previously
-        dispatched train is taken into account.
-        Also, only dispatching one additional train per tick may also more
-        evenly distribute trains between equally competing stations, by not
-        allowing one station to hog too many trains at once on one tick.
+        If those conditions are true, we calculate how much less percent stored
+        we have than the average and we work out how many train-loads this
+        equates to, capped to be no greater than QUEUE_LENGTH and to send no
+        more trains than we have space to store the loads of.
+        If this is zero, we request 1 train to be sent, otherwise we request
+        the calculated number of trains to be sent.
         """
         space_available = units_accounted < self.MAX_STOREABLE and (self.MAX_STOREABLE - units_accounted >= self.UNITS_IN_TRAIN_LOAD)
-        deserves_resupply = percentage_stored <= (factorio_percentage(precision, total_percentage_stored, number_of_stations) // precision)
-        space_in_the_queue = train_count < self.QUEUE_LENGTH
-        return train_count + 1 if (space_available and deserves_resupply and space_in_the_queue) else train_count
+        average_percentage_stored = factorio_percentage(precision, total_percentage_stored, number_of_stations) // precision
+        deserves_resupply = percentage_stored <= average_percentage_stored
+        percentage_deficit = average_percentage_stored - percentage_stored
+        units_wanted = (percentage_deficit * self.MAX_STOREABLE) // precision
+        trains_wanted = units_wanted // self.UNITS_IN_TRAIN_LOAD
+        # XXX: assuming we don't need to check again for units_wanted > free space?
+        return min(trains_wanted, self.QUEUE_LENGTH) if (space_available and deserves_resupply) else 0
