@@ -49,31 +49,33 @@ module get_trains_limit #(
   input [INT:0] percentage_stored, // S
   input [INT:0] total_percentage_stored, // R
   input [INT:0] number_of_stations, // G
-  input [INT:0] train_count, // C
   input [INT:0] precision, // P
   output [INT:0] trains_limit // L
 );
-  // B, D, E
-  reg space_available, deserves_resupply, space_in_the_queue;
+  reg [INT:0] average_percentage_stored;
+  assign average_percentage_stored = total_percentage_stored / number_of_stations;
+  reg [INT:0] ideal_trains_to_send, trains_to_send;
+  reg [INT:0] free_space, trains_for_free_space;
+  assign free_space = MAX_STOREABLE - units_accounted;
+  assign trains_for_free_space = free_space / UNITS_IN_TRAIN_LOAD;
+  reg [INT:0] percentage_deficit, units_deficit, trains_for_deficit, clipped_trains_for_deficit;
+  assign percentage_deficit = average_percentage_stored - percentage_stored;
   reg [INT:0] t3;
-  assign t3 = MAX_STOREABLE - units_accounted;
-  reg t4;
-  assign t4 = t3 >= UNITS_IN_TRAIN_LOAD;
-  reg t5;
-  assign t5 = units_accounted < MAX_STOREABLE;
-  assign space_available = t5 && t4;
-  reg [INT:0] t6;
-  assign t6 = total_percentage_stored * precision;
-  reg [INT:0] t7;
-  assign t7 = t6 / number_of_stations;
-  reg [INT:0] t8;
-  assign t8 = t7 / precision;
-  assign deserves_resupply = percentage_stored <= t8;
-  assign space_in_the_queue = train_count < QUEUE_LENGTH;
-  reg [INT:0] t9;
-  // XXX: no temporary needed because Factorio signals sum implicitly when on same wire
-  assign t9 = (space_available + deserves_resupply + space_in_the_queue) == 3 ? 1 : 0;
-  assign trains_limit = train_count + t9;
+  assign t3 = percentage_deficit * MAX_STOREABLE;
+  assign units_deficit = t3 / precision;
+  assign trains_for_deficit = units_deficit / UNITS_IN_TRAIN_LOAD;
+  reg [INT:0] t4;
+  assign t4 = trains_for_deficit == 0 ? 1 : 0;
+  assign clipped_trains_for_deficit = trains_for_deficit + t4; // temporary clipped_trains_for_deficit not needed due to free summing
+  reg [INT:0] t5, t6;
+  assign t5 = trains_for_free_space <= clipped_trains_for_deficit ? trains_for_free_space : 0;
+  assign t6 = clipped_trains_for_deficit < trains_for_free_space ? clipped_trains_for_deficit : 0;
+  assign ideal_trains_to_send = t5 + t6; // might not need temporaries due to free summing
+  reg [INT:0] t7, t8;
+  assign t7 = ideal_trains_to_send <= QUEUE_LENGTH ? ideal_trains_to_send : 0;
+  assign t8 = QUEUE_LENGTH < ideal_trains_to_send ? QUEUE_LENGTH : 0;
+  assign trains_to_send = t7 + t8; // might not need temporaries due to free summing
+  assign trains_limit = average_percentage_stored >= percentage_stored ? trains_to_send : 0;
 endmodule
 
 module dropoff_train_station #(
@@ -96,7 +98,6 @@ module dropoff_train_station #(
     .stopped_train_id(stopped_train_id),
     .train_count(train_count),
     .units_at_this_station(units_at_this_station),
-    .stopped_train_contents(stopped_train_contents),
     .units_accounted(units_accounted)
   );
   get_percentage_stored #(MAX_STOREABLE, INT) ps_getter(
@@ -104,12 +105,17 @@ module dropoff_train_station #(
     .precision(precision),
     .percentage_stored(percentage_stored)
   );
+  reg [INT:0] percentage_actually_stored;
+  get_percentage_stored #(MAX_STOREABLE, INT) psa_getter(
+    .units_accounted(units_at_this_station),
+    .precision(precision),
+    .percentage_stored(percentage_actually_stored)
+  );
   get_trains_limit #(QUEUE_LENGTH, MAX_STOREABLE, UNITS_IN_TRAIN_LOAD, INT) tl_getter(
     .units_accounted(units_accounted),
-    .percentage_stored(percentage_stored),
+    .percentage_stored(percentage_actually_stored),
     .total_percentage_stored(total_percentage_stored),
     .number_of_stations(number_of_stations),
-    .train_count(train_count),
     .precision(precision),
     .trains_limit(trains_limit)
   );
