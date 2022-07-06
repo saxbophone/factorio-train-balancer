@@ -25,6 +25,10 @@ module get_a #(
   assign a = u + t1;
 endmodule
 
+// NOTE: this module gets reused with different pin arrangements,
+// therefore the pin names must not be used verbatim but must be
+// checked for each substitution!
+// TODO: factor out this module to an inline module
 module get_s #(
   parameter M = 128000, // M
   parameter INT = 31
@@ -48,31 +52,33 @@ module get_l #(
   input [INT:0] s, // S
   input [INT:0] r, // R
   input [INT:0] g, // G
-  input [INT:0] c, // C
   input [INT:0] p, // P
   output [INT:0] l // L
 );
-  // B, D, E but due to Factorio semantics, can coalesce into 1
-  reg b, d, e;
+  reg [INT:0] v;
+  assign v = r / g;
+  reg [INT:0] i, e;
+  reg [INT:0] f, h;
+  assign f = M - a;
+  assign h = f / W;
+  reg [INT:0] d, y, o, n;
+  assign d = v - s;
   reg [INT:0] t3;
-  assign t3 = M - a;
-  reg t4;
-  assign t4 = t3 >= W;
-  reg t5;
-  assign t5 = a < M;
-  assign b = t5 && t4;
-  reg [INT:0] t6;
-  assign t6 = r * p;
-  reg [INT:0] t7;
-  assign t7 = t6 / g;
-  reg [INT:0] t8;
-  assign t8 = t7 / p;
-  assign d = s <= t8;
-  assign e = c < Q;
-  reg [INT:0] t9;
-  // XXX: no temporary needed because Factorio signals sum implicitly when on same wire
-  assign t9 = (b + d + e) == 3 ? 1 : 0;
-  assign l = c + t9;
+  assign t3 = d * M;
+  assign y = t3 / p;
+  assign o = y / W;
+  reg [INT:0] t4;
+  assign t4 = o == 0 ? 1 : 0;
+  assign n = o + t4; // temporary n not needed due to free summing
+  reg [INT:0] t5, t6;
+  assign t5 = h <= n ? h : 0;
+  assign t6 = n < h ? n : 0;
+  assign i = t5 + t6; // might not need temporaries due to free summing
+  reg [INT:0] t7, t8;
+  assign t7 = i <= Q ? i : 0;
+  assign t8 = Q < i ? Q : 0;
+  assign e = t7 + t8; // might not need temporaries due to free summing
+  assign l = v >= s ? e : 0;
 endmodule
 
 /*
@@ -122,12 +128,17 @@ module dropoff_train_station #(
     .p(p),
     .s(s)
   );
+  reg [INT:0] x;
+  get_s #(M, INT) psa_getter(
+    .a(u),
+    .p(p),
+    .s(x)
+  );
   get_l #(Q, M, W, INT) tl_getter(
     .a(a),
-    .s(s),
+    .s(x),
     .r(r),
     .g(g),
-    .c(c),
     .p(p),
     .l(l)
   );
