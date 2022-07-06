@@ -16,7 +16,7 @@ module get_a #(
   output [INT:0] a // A
 );
   // trains en route = Z
-  reg [INT:0] z, a;
+  reg [INT:0] z;
   reg [INT:0] t0;
   assign t0 = t != 0 ? 1 : 0;
   assign z = c - t0;

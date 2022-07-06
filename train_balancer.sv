@@ -8,7 +8,7 @@ module get_units_accounted #(
   output [INT:0] units_accounted // A
 );
   // trains en route = Z
-  reg [INT:0] trains_en_route, units_accounted;
+  reg [INT:0] trains_en_route;
   assign trains_en_route = stopped_train_id == 0 ? train_count : train_count - 1;
   assign units_accounted = units_at_this_station + (trains_en_route * UNITS_IN_TRAIN_LOAD);
 endmodule
