@@ -1,0 +1,7 @@
+flowchart TD
+    A{{percentage_stored > average?}}
+    A -->|Yes| B[[Send 0 trains]]
+    A -->|No| C[Calculate number of trains for:]
+    C --> D[Free space] --> G
+    C --> E[Percentage deficit] --> F([Force number of trains > 0]) --> G
+    G[[Send as many trains as the smallest of trains_for_free_space, trains_for_deficit]]
