@@ -47,7 +47,7 @@ module get_trains_limit #(
   assign percentage_deficit = average_percentage_stored - percentage_stored;
   assign units_deficit = (percentage_deficit * MAX_STOREABLE) / precision;
   assign trains_for_deficit = units_deficit / UNITS_IN_TRAIN_LOAD;
-  assign clipped_trains_for_deficit = units_deficit > 0 ? units_deficit : 1;
+  assign clipped_trains_for_deficit = trains_for_deficit > 0 ? trains_for_deficit : 1;
   assign ideal_trains_to_send = trains_for_free_space < clipped_trains_for_deficit ? trains_for_free_space : clipped_trains_for_deficit;
   assign trains_to_send = ideal_trains_to_send < QUEUE_LENGTH ? ideal_trains_to_send : QUEUE_LENGTH;
   assign trains_limit = percentage_stored > average_percentage_stored ? 0 : trains_to_send;
@@ -73,7 +73,6 @@ module dropoff_train_station #(
     .stopped_train_id(stopped_train_id),
     .train_count(train_count),
     .units_at_this_station(units_at_this_station),
-    .stopped_train_contents(stopped_train_contents),
     .units_accounted(units_accounted)
   );
   get_percentage_stored #(MAX_STOREABLE, INT) ps_getter(

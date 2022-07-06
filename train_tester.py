@@ -6,10 +6,10 @@ UNITS_IN_TRAIN_LOAD = 8_000
 
 stations = [
     DropoffTrainStation(max_storeable=128_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=3),
-    DropoffTrainStation(max_storeable=128_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=1),
-    DropoffTrainStation(max_storeable=97_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=2),
-    DropoffTrainStation(max_storeable=63_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=3),
-    DropoffTrainStation(max_storeable=997_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=5)
+    # DropoffTrainStation(max_storeable=128_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=1),
+    # DropoffTrainStation(max_storeable=128_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=2),
+    # DropoffTrainStation(max_storeable=128_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=3),
+    # DropoffTrainStation(max_storeable=128_000, units_in_train_load=UNITS_IN_TRAIN_LOAD, queue_length=5)
 ]
 
 STATION_NAMES = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
