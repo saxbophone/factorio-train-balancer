@@ -1,7 +1,7 @@
 def factorio_percentage(precision: int, numerator: int, denominator: int):
     # no floating-point in Factorio, the best way to limit loss of precision is
     # to scale up before dividing
-    return 0((numerator * precision) // denominator)
+    return ((numerator * precision) // denominator)
 
 class DropoffTrainStation:
     # the ctor params represent constants that would be hard-coded in Factorio
@@ -34,13 +34,11 @@ class DropoffTrainStation:
         # NOTE: remember that percentage_stored also includes any train loads en-route
         trains_en_route = train_count if stopped_train_id == 0 else train_count - 1
         units_accounted = units_at_this_station + (trains_en_route * self.UNITS_IN_TRAIN_LOAD)
-        # percentage_stored is also needed for trains_limit, so calculate first
-        percentage_stored = self.__get_percentage_stored(
-            units_accounted,
-            precision
-        )
         return (
-            percentage_stored,
+            self.__get_percentage_stored(
+                units_accounted,
+                precision
+            ),
             self.__get_trains_limit(
                 units_accounted,
                 self.__get_percentage_stored(units_at_this_station, precision),
@@ -76,11 +74,18 @@ class DropoffTrainStation:
         If this is zero, we request 1 train to be sent, otherwise we request
         the calculated number of trains to be sent.
         """
-        space_available = units_accounted < self.MAX_STOREABLE and (self.MAX_STOREABLE - units_accounted >= self.UNITS_IN_TRAIN_LOAD)
         average_percentage_stored = factorio_percentage(precision, total_percentage_stored, number_of_stations) // precision
-        deserves_resupply = percentage_stored <= average_percentage_stored
-        percentage_deficit = average_percentage_stored - percentage_stored
-        units_wanted = (percentage_deficit * self.MAX_STOREABLE) // precision
-        trains_wanted = units_wanted // self.UNITS_IN_TRAIN_LOAD
-        # XXX: assuming we don't need to check again for units_wanted > free space?
-        return min(trains_wanted, self.QUEUE_LENGTH) if (space_available and deserves_resupply) else 0
+        if percentage_stored > average_percentage_stored:
+            return 0  # send zero trains in this case
+        else:
+            # calculate number of trains for free space and deficit, respectively
+            # free space
+            free_space = self.MAX_STOREABLE - units_accounted
+            trains_for_free_space = free_space // self.UNITS_IN_TRAIN_LOAD
+            # percentage deficit
+            percentage_deficit = average_percentage_stored - percentage_stored
+            units_deficit = (percentage_deficit * self.MAX_STOREABLE) // precision
+            # force trains for deficit to be at least 1
+            trains_for_deficit = max(units_deficit // self.UNITS_IN_TRAIN_LOAD, 1)
+            # send as many trains as the smallest of trains_for_free_space, trains_for_deficit and QUEUE_LENGTH
+            return min(trains_for_free_space, trains_for_deficit, self.QUEUE_LENGTH)
