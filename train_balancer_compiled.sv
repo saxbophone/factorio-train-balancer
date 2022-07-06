@@ -25,6 +25,10 @@ module get_a #(
   assign a = u + t1;
 endmodule
 
+// NOTE: module get_percentage_stored was inlined out during compilation
+// due to it being reused with different parameters, risking signal clash
+// if not inlined out into separate signal substitutions
+
 module get_l #(
   parameter Q = 3, // Q
   parameter M = 128000, // M
